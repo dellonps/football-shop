@@ -6,4 +6,4 @@ def home(request):
         "your_name": "Cristian Dillon Philbert",  # Your name
         "your_class": "Information system 2024"        # Your class
     }
-    return render(request, "home.html", context)
+    return render(request, ".html", context)
