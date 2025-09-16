@@ -4,7 +4,7 @@ from django.core import serializers
 
 from main.models import Product
 from main.forms import ProductForm
-
+ 
 
 # --- Main page: list all products ---
 def show_main(request):
