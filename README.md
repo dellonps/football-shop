@@ -84,7 +84,7 @@ TUGAS 3
 
 ![xml](image.png)
 ![json](image-1.png)
-![json by id]((image-2.png))
+![json by id](image-2.png)
 ![xml by id](image-3.png)
 
 
