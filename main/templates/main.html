@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block content %}
+<h1>Football Shop</h1>
+
+<h5>NPM:</h5>
+<p>{{ npm }}</p>
+
+<h5>Name:</h5>
+<p>{{ name }}</p>
+
+<h5>Class:</h5>
+<p>{{ class }}</p>
+
+<a href="{% url 'main:create_product' %}">
+  <button>+ Add Product</button>
+</a>
+
+<hr>
+
+{% if not products %}
+  <p>No products available in Football Shop.</p>
+{% else %}
+  {% for product in products %}
+    <div>
+      <h2>{{ product.name }}</h2>
+      <p><b>Category:</b> {{ product.category }}</p>
+      <p><b>Price:</b> Rp {{ product.price|intcomma }}</p>
+      
+      {% if product.is_featured %}
+        <p><b>Featured Product</b></p>
+      {% endif %}
+
+      {% if product.thumbnail %}
+        <img src="{{ product.thumbnail }}" alt="thumbnail" style="width:150px; height:auto;">
+        <br />
+      {% endif %}
+
+      <p>{{ product.description|truncatewords:20 }}...</p>
+
+      <a href="{% url 'main:show_product' product.id %}">
+        <button>Detail</button>
+      </a>
+    </div>
+    <hr>
+  {% endfor %}
+{% endif %}
+{% endblock content %}
