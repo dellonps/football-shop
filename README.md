@@ -1,3 +1,135 @@
+TUGAS 4
+1. Apa itu AuthenticationForm di Django? Kelebihan & kekurangannya
+    AuthenticationForm adalah form bawaan Django (django.contrib.auth.forms.AuthenticationForm) yang menyediakan field untuk login (biasanya username dan password) dan fungsi validasi terkait autentikasi user
+    
+    Kelebihan
+
+        1. Langsung pakai (bawaan), sudah menangani banyak detail validasi (cek kredensial, inactive user via confirm_login_allowed).
+        2. Terintegrasi dengan backend auth Django sehingga aman dan konsisten
+        3. Memiliki method get_user() sehingga memudahkan proses login().
+        4. Menghasilkan pesan error/validasi yang rapi tanpa harus menulis validasi manual.
+
+    Kekurangan 
+
+        1. Field default adalah username — kalau sistemmu pakai email sebagai login perlu kustomisasi atau form kustom.
+        2. Tidak menyediakan fitur lanjutan (2FA, social auth, OTP) — harus integrasi paket lain.
+        3. Tampilan (HTML) perlu disediakan di template; kalau ingin UI sangat berbeda biasanya buat custom form.
+        4. AuthenticationForm hanya memvalidasi kredensial — proses login() (set session, cookie) tetap harus dilakukan secara eksplisit.
+2. Apa perbedaan antara autentikasi dan otorisasi? Bagaiamana Django mengimplementasikan kedua konsep tersebut?
+
+    Autentikasi
+       - Menjawab identitas pengguna (login), biasanya dengan username/password.
+
+       - Django: django.contrib.auth.authenticate() untuk verifikasi kredensial, django.contrib.auth.login() menyimpan info session. Model User menyimpan data akun (username, password (hash), email, is_active, last_login, dll).
+    
+    Otorisasi
+        - Menangani hak akses: apakah user boleh mengakses halaman/aksi/objek tertentu.
+        - Django: sistem permission & group (user.has_perm('app_label.codename'), @permission_required, user.is_staff, user.is_superuser).
+
+3. Apa saja kelebihan dan kekurangan session dan cookies dalam konteks menyimpan state di aplikasi web?
+
+    Cookies (client-side)
+        Kelebihan:
+
+            - Tidak memerlukan penyimpanan server (stateless).
+            - Persisten (bisa bertahan setelah browser ditutup).
+            - Mudah dipakai untuk preference kecil.
+
+        Kekurangan:
+
+            - Ukuran terbatas (~4KB).
+            - Rentan terhadap pencurian lewat XSS kalau tidak diberi HttpOnly.
+            - Bisa dimanipulasi jika tidak ditandatangani/terenkripsi.
+            - Tidak cocok menyimpan data sensitif (mis. session user) tanpa proteksi.
+    
+    Sessions (server-side)
+            Kelebihan:
+
+            - Data sensitif tetap di server → lebih aman dari manipulasi.
+            - Bisa simpan lebih banyak data tanpa terikat limit cookie.
+            - Mudah di-revoke (hapus sesi di server).
+
+            Kekurangan:
+
+            - Membutuhkan penyimpanan server (DB/Redis) → beban & skalabilitas perlu dipikirkan.
+            - Perlu mekanisme shared session store atau sticky sessions di arsitektur distributed.
+
+4.  Apakah penggunaan cookies aman secara default dalam pengembangan web, atau apakah ada risiko potensial yang harus diwaspadai? Bagaimana Django menangani hal tersebut?
+
+    Risiko cookies
+
+        - XSS: jika attacker bisa menjalankan JavaScript di halaman, cookie non-HttpOnly bisa dicuri.
+        - CSRF: cookie dikirim otomatis oleh browser → attacker bisa membuat permintaan yang menggunakan cookie korban jika tidak ada proteksi.
+        - Cookie tampering: data cookie bisa dimanipulasi kecuali ditandatangani/encrypted
+    Bagaimana Django menangani keamanan cookie
+        - Session cookie: SESSION_COOKIE_HTTPONLY = True (default) mencegah JavaScript mengakses cookie session.
+        - CSRF protection: CsrfViewMiddleware + {% csrf_token %} di template form, dan CSRF_TRUSTED_ORIGINS untuk origin checking.
+        - Signed cookies / signed data: Django punya utilitas django.core.signing dan ada option - SESSION_ENGINE='django.contrib.sessions.backends.signed_cookies'.
+        - Password hashing: password disimpan hashed; SECRET_KEY dipakai untuk penandatanganan cookie/sessions.
+
+5.  Jelaskan bagaimana cara kamu mengimplementasikan checklist di atas secara step-by-step (bukan hanya sekadar mengikuti tutorial).
+
+    A. Setup model & migrasi
+        1. Tambah relasi user di main/models.py
+        2. python manage.py makemigrations & python manage.py migrate.
+
+    B. Registrasi, Login, Logout (views + templates)
+        1. Register view: gunakan UserCreationForm. Simpan user lewat form.save(). Tampilkan template register.html dengan {% csrf_token %}.
+        2. Login view: gunakan AuthenticationForm(request, data=request.POST). Jika valid, login(request, user) dan buat cookie last_login:
+        3. Logout view: logout(request) lalu response.delete_cookie('last_login') dan redirect ke login.
+        4. Tambahkan @login_required(login_url='/login') pada view yang butuh proteksi (mis. show_main, create_product).
+
+    C. Save Product dengan user yang login
+
+        Di create_product view pakai commit=False untuk menyisipkan user, memastikan setiap produk baru otomatis tertaut ke user yang membuatnya.
+
+    D. Buat dua user dan masing-masing tiga dummy data (lokal)
+
+        1. Buka shell: python manage.py shell
+
+        2. Contoh perintah :
+
+                from django.contrib.auth.models import User
+                from main.models import Product
+
+                user1, _ = User.objects.get_or_create(username='user1')
+                user1.set_password('user123'); user1.save()
+                user2, _ = User.objects.get_or_create(username='user2')
+                user2.set_password('user123'); user2.save()
+
+                # Produk user1
+                Product.objects.create(user=user1, name='Sepatu A', price=400000, category='Shoes', description='...', thumbnail='https://...')
+                Product.objects.create(user=user1, name='Jersey A', price=300000, category='Jersey', description='...', thumbnail='https://...')
+                Product.objects.create(user=user1, name='Bola A', price=150000, category='Ball', description='...', thumbnail='https://...')
+
+                # Produk user2
+                Product.objects.create(user=user2, name='Sepatu B', price=450000, category='Shoes', description='...', thumbnail='https://...')
+                Product.objects.create(user=user2, name='Jersey B', price=320000, category='Jersey', description='...', thumbnail='https://...')
+                Product.objects.create(user=user2, name='Bola B', price=180000, category='Ball', description='...', thumbnail='https://...')
+
+    E. Tampilkan info user dan last_login
+
+        1. Di show_main:
+
+            if filter_type == 'all':
+                products = Product.objects.all()
+            else:
+                products = Product.objects.filter(user=request.user)
+
+            context = {
+                'products': products,
+                'username': request.user.username,
+                'last_login': request.COOKIES.get('last_login')
+            }
+        2. Di main.html tampilkan:
+
+            Logged in as: {{ username }}
+            Sesi terakhir login: {{ last_login }}
+
+
+
+![Bukti user serta tiap dummy](image-5.png)
+![Last login cookie](image-6.png)
 
 TUGAS 3
 
