@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
+  <!-- Product Card -->
+  <a href="{% url 'main:show_product' product.id %}" class="w-full max-w-xl block group">
+    <article class="bg-white rounded-lg border border-gray-200 group-hover:shadow-lg transition-shadow duration-300 overflow-hidden cursor-pointer">
+      
+      <!-- Thumbnail -->
+      <div class="aspect-[16/9] relative overflow-hidden">
+        {% if product.thumbnail %}
+          <img src="{{ product.thumbnail }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+        {% else %}
+          <div class="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-sm">
+            No Image
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Content -->
+      <div class="p-6">
+        <h3 class="text-xl font-semibold text-gray-900 mb-2 line-clamp-1">
+          {{ product.name }}
+        </h3>
+
+        <p class="text-green-600 font-bold mb-3">
+          Rp {{ product.price }}
+        </p>
+
+        <p class="text-gray-600 text-sm mb-6">
+          {{ product.description|truncatechars:50 }}
+        </p>
+
+        <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+          <span class="text-blue-600 group-hover:text-blue-700 text-sm font-medium">
+            Detail
+          </span>
+          <!-- Tombol hapus harus dipisah, jadi jangan ikut anchor -->
+
+          <a href="{% url 'main:edit_product' product.id %}" class="text-gray-600 hover:text-gray-700 text-sm transition-colors mr-3">
+            Edit
+          </a>
+
+          <a href="{% url 'main:delete_product' product.id %}" 
+             class="text-red-600 hover:text-red-700 text-sm font-medium transition-colors"
+             onclick="event.stopPropagation();">
+            Hapus
+          </a>
+        </div>
+      </div>
+    </article>
+  </a>
+</div>
+
+{% endblock content %}

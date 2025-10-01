@@ -1,4 +1,5 @@
 from django.forms import ModelForm
+
 from main.models import Product
 
 class ProductForm(ModelForm):
@@ -10,5 +11,6 @@ class ProductForm(ModelForm):
             "description",
             "thumbnail",
             "category",
-            "is_featured",
+            
         ]
+

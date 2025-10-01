@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block meta %}
-<title>Create Product - Football Shop</title>
+<title>Edit Product - Football Product</title>
 {% endblock meta %}
 
 {% block content %}
@@ -16,9 +18,9 @@
     
     <!-- Form -->
     <div class="bg-white rounded-lg border border-gray-200 p-6 sm:p-8 form-style">
-      <div class="mb-4 text-center">
-        <h1 class="text-3xl font-bold mb-2 bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent">Create New Product</h1>
-        <p class="text-gray-600">Fill in the details below to add a new product to your shop 🎁.</p>
+      <div class="mb-8 text-center">
+        <h1 class="text-3xl font-bold mb-2 bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent">Edit Product</h1>
+        <p class="text-gray-600">Update your Product 🛠️</p>
       </div>
       
       <form method="POST" class="space-y-6">
@@ -50,7 +52,7 @@
          text-white px-6 py-3 rounded-md font-medium 
          hover:from-blue-600 hover:to-teal-500 
          transition-colors">
-            Sale The Product
+            Update Product
           </button>
         </div>
       </form>

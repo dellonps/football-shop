@@ -15,17 +15,25 @@ from main.forms import ProductForm
 @login_required(login_url="/login")
 def show_main(request):
    filter_type = request.GET.get("filter", "all")  # default 'all'
+   category_filter = request.GET.get("category", None)
 
    if filter_type == "all":
         shop_list = Product.objects.all()
    else:
         shop_list = Product.objects.filter(user=request.user)
+   
+   categories = Product.objects.values_list("category", flat=True).distinct()
+   if category_filter:
+        shop_list = shop_list.filter(category=category_filter)
+
+      
 
    context = {
         "npm": "2406495956",      
         "name": "Cristian Dillon Philbert",     
         "class": "PBP A",       
         "products": shop_list,
+        "categories": categories,
         "last_login": request.COOKIES.get('last_login', 'Never')
     }
    return render(request, "main.html", context)
@@ -46,6 +54,25 @@ def create_product(request):
 
 
     return render(request, "create_product.html", context)
+
+def edit_product(request, id):
+    product = get_object_or_404(Product, pk=id)
+    form = ProductForm(request.POST or None, instance=product)
+    if form.is_valid() and request.method == 'POST':
+        form.save()
+        return redirect('main:show_main')
+
+    context = {
+        'form': form
+    }
+
+    return render(request, "edit_product.html", context)
+
+def delete_product(request, id):
+    product = get_object_or_404(Product, pk=id)
+    product.delete()
+    return HttpResponseRedirect(reverse('main:show_main'))
+
 
 
 def show_product(request, id):
