@@ -2,56 +2,82 @@
 {% load static %}
 
 {% block meta %}
-<title>Edit Product - Football Product</title>
+<title>Edit Product - Football Shop</title>
 {% endblock meta %}
 
 {% block content %}
-<div class="bg-gray-50 w-full min-h-screen">
-  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="bg-gray-50 w-full min-h-screen flex items-center justify-center p-8">
+  <div class="max-w-3xl w-full">
     
-    <!-- Back Navigation -->
-    <div class="mb-6">
-      <a href="{% url 'main:show_main' %}" class="text-grey-500 hover:text-teal-300 font-medium transition-colors">
-        ← Back to Home
-      </a>
-    </div>
-    
-    <!-- Form -->
-    <div class="bg-white rounded-lg border border-gray-200 p-6 sm:p-8 form-style">
-      <div class="mb-8 text-center">
-        <h1 class="text-3xl font-bold mb-2 bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent">Edit Product</h1>
-        <p class="text-gray-600">Update your Product 🛠️</p>
-      </div>
+    <!-- Form Card -->
+    <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-8 sm:p-12 form-style">
       
-      <form method="POST" class="space-y-6">
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold mb-2 bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent">
+          Edit Product
+        </h1>
+        <p class="text-gray-600">Update your product 🛠️</p>
+      </div>
+
+      <!-- Error Messages -->
+      <div id="error-messages" class="mb-6"></div>
+
+      <!-- Edit Form -->
+      <form id="edit-product-form" class="space-y-5">
         {% csrf_token %}
-        {% for field in form %}
-          <div>
-            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-              {{ field.label }}
-            </label>
-            <div class="w-full">
-              {{ field }}
-            </div>
-            {% if field.help_text %}
-              <p class="mt-1 text-sm text-gray-500">{{ field.help_text }}</p>
-            {% endif %}
-            {% for error in field.errors %}
-              <p class="mt-1 text-sm text-red-600">{{ error }}</p>
-            {% endfor %}
-          </div>
-        {% endfor %}
         
+        <!-- Name -->
+        <div>
+          <label for="id_name" class="block text-sm font-medium text-gray-700 mb-2">Name</label>
+          <input type="text" id="id_name" name="name" 
+                 value="{{ form.instance.name }}" required
+                 class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-teal-500 transition-colors">
+        </div>
+
+        <!-- Price -->
+        <div>
+          <label for="id_price" class="block text-sm font-medium text-gray-700 mb-2">Price</label>
+          <input type="number" id="id_price" name="price" 
+                 value="{{ form.instance.price }}" required
+                 class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-teal-500 transition-colors">
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label for="id_description" class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+          <textarea id="id_description" name="description" required
+                 class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-teal-500 transition-colors">{{ form.instance.description }}</textarea>
+        </div>
+
+        <!-- Thumbnail URL -->
+        <div>
+          <label for="id_thumbnail" class="block text-sm font-medium text-gray-700 mb-2">Thumbnail URL</label>
+          <input type="text" id="id_thumbnail" name="thumbnail"
+                 value="{% if form.instance.thumbnail %}{{ form.instance.thumbnail.url }}{% endif %}"
+                 class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-teal-500 transition-colors">
+          <p class="text-sm text-gray-500 mt-1">Paste image URL here</p>
+        </div>
+
+        <!-- Category -->
+        <div>
+          <label for="id_category" class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+          <input type="text" id="id_category" name="category" 
+                 value="{{ form.instance.category }}" required
+                 class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-teal-500 transition-colors">
+        </div>
+
+        <!-- Action Buttons -->
         <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
-          <a href="{% url 'main:show_main' %}" class="order-2 sm:order-1 px-6 py-3 border border-red-300 text-red-600 rounded-md font-medium 
-          hover:bg-red-600 hover:text-white transition-colors text-center">
+          <a href="{% url 'main:show_main' %}" 
+             class="order-2 sm:order-1 px-6 py-3 border border-red-300 text-red-600 rounded-md font-medium 
+                    hover:bg-red-600 hover:text-white transition-colors text-center">
             Cancel
           </a>
           <button type="submit" class="order-1 sm:order-2 flex-1 
-         bg-gradient-to-r from-teal-500 to-blue-600 
-         text-white px-6 py-3 rounded-md font-medium 
-         hover:from-blue-600 hover:to-teal-500 
-         transition-colors">
+                  bg-gradient-to-r from-teal-500 to-blue-600 
+                  text-white px-6 py-3 rounded-md font-medium 
+                  hover:from-blue-600 hover:to-teal-500 
+                  transition-colors">
             Update Product
           </button>
         </div>
@@ -59,4 +85,52 @@
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('edit-product-form');
+    const errorContainer = document.getElementById('error-messages');
+    const productId = "{{ form.instance.id }}";
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const data = new URLSearchParams({
+            name: document.getElementById('id_name').value,
+            price: document.getElementById('id_price').value,
+            description: document.getElementById('id_description').value,
+            category: document.getElementById('id_category').value,
+            thumbnail: document.getElementById('id_thumbnail').value
+        });
+
+        fetch(`/products/update/ajax/${productId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': csrfToken
+            },
+            body: data
+        })
+        .then(res => res.json())
+        .then(data => {
+            errorContainer.innerHTML = '';
+            if(data.status === 'success') {
+                alert('Product updated successfully!');
+                window.location.href = "{% url 'main:show_main' %}";
+            } else {
+                errorContainer.innerHTML = `<div class="px-4 py-3 rounded-md text-sm border bg-red-50 border-red-200 text-red-700 mb-2">
+                    ${data.message || 'Failed to update product.'}
+                </div>`;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            errorContainer.innerHTML = `<div class="px-4 py-3 rounded-md text-sm border bg-red-50 border-red-200 text-red-700 mb-2">
+                Something went wrong.
+            </div>`;
+        });
+    });
+});
+</script>
 {% endblock %}

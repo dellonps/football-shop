@@ -75,4 +75,39 @@
     </div>
   </div>
 </div>
+
+
+
+
+<script>
+document.getElementById("login-form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const errorMessageDiv = document.getElementById("error-message");
+
+    try {
+        const response = await fetch("{% url 'main:login_ajax' %}", {
+            method: "POST",
+            body: formData,
+        });
+
+        const data = await response.json();
+
+        if (data.status === "success") {
+            errorMessageDiv.classList.add("hidden");
+            showToast('Success!', data.message, 'success');
+            setTimeout(() => {
+                window.location.href = "{% url 'main:show_main' %}";
+            }, 1000);
+        } else {
+            errorMessageDiv.textContent = data.message;
+            errorMessageDiv.classList.remove("hidden");
+        }
+    } catch (error) {
+        errorMessageDiv.textContent = "An unexpected error occurred. Please try again.";
+        errorMessageDiv.classList.remove("hidden");
+    }
+});
+</script>
 {% endblock content %}

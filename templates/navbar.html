@@ -3,7 +3,7 @@
       <div class="flex items-center justify-between h-16">
         <div class="flex items-center">
           <h1 class="text-xl font-semibold text-gray-900">
-            <span class="bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent">Football</span> Shop
+            <span class="text-green-600">Football</span> Shop
           </h1>
         </div>
         
@@ -12,21 +12,18 @@
           <a href="/" class="text-gray-600 hover:text-gray-900 font-medium transition-colors">
             Home
           </a>
-          
-
-          {% for category in categories %}
-            <a href="?category={{ category }}" class="text-gray-600 hover:text-gray-900 font-medium transition-colors capitalize">
-            {{ category }}
-            </a>
-          {% endfor %}
+          <!-- MODIFIED: Removed href, added id and cursor-pointer -->
+          <a id="nav-create-product" class="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer">
+            Create Product
+          </a>
         </div>
         
         <!-- Desktop User Section -->
         <div class="hidden md:flex items-center space-x-6">
           {% if user.is_authenticated %}
             <div class="text-right">
-              <div class="text-sm font-medium text-gray-900">{{ name|default:user.username }}</div>
-              <div class="text-xs text-gray-500">{{ npm|default:"Student" }} - {{ class|default:"Class" }}</div>
+              <div class="text-sm font-medium text-gray-900">{{ user.username }}</div>
+              <div class="text-xs text-gray-500">Student</div>
             </div>
             <a href="{% url 'main:logout' %}" class="text-red-600 hover:text-red-700 font-medium transition-colors">
               Logout
@@ -41,7 +38,7 @@
           {% endif %}
         </div>
         
-        <!-- Mobile Menu Button -->
+        <!-- Mobile Menu Button (functionality remains the same) -->
         <div class="md:hidden flex items-center">
           <button class="mobile-menu-button p-2 text-gray-600 hover:text-gray-900 transition-colors">
             <span class="sr-only">Open menu</span>
@@ -57,28 +54,20 @@
     <!-- Mobile Menu -->
     <div class="mobile-menu hidden md:hidden bg-white border-t border-gray-200">
       <div class="px-6 py-4 space-y-4">
-        <!-- Mobile Navigation Links -->
         <div class="space-y-1">
           <a href="/" class="block text-gray-600 hover:text-gray-900 font-medium py-3 transition-colors">
             Home
           </a>
-          <a href="{% url 'main:create_product' %}" class="block text-gray-600 hover:text-gray-900 font-medium py-3 transition-colors">
+          <!-- MODIFIED: Removed href, added id and cursor-pointer for mobile -->
+          <a id="nav-create-product-mobile" class="block text-gray-600 hover:text-gray-900 font-medium py-3 transition-colors cursor-pointer">
             Create Product
           </a>
-
-          {% for category in categories %}
-            <a href="?category={{ category }}" class="block text-gray-600 hover:text-gray-900 font-medium py-3 transition-colors capitalize">
-            {{ category }}
-            </a>
-          {% endfor %}
         </div>
-        
-        <!-- Mobile User Section -->
         <div class="border-t border-gray-200 pt-4">
           {% if user.is_authenticated %}
             <div class="mb-4">
-              <div class="font-medium text-gray-900">{{ name|default:user.username }}</div>
-              <div class="text-sm text-gray-500">{{ npm|default:"Student" }} - {{ class|default:"Class" }}</div>
+              <div class="font-medium text-gray-900">{{ user.username }}</div>
+              <div class="text-sm text-gray-500">Student</div>
             </div>
             <a href="{% url 'main:logout' %}" class="block text-red-600 hover:text-red-700 font-medium py-3 transition-colors">
               Logout
@@ -99,9 +88,6 @@
     <script>
       const btn = document.querySelector("button.mobile-menu-button");
       const menu = document.querySelector(".mobile-menu");
-    
-      btn.addEventListener("click", () => {
-        menu.classList.toggle("hidden");
-      });
+      btn.addEventListener("click", () => menu.classList.toggle("hidden"));
     </script>
   </nav>
