@@ -238,10 +238,19 @@
     async function fetchProducts() {
             loading.classList.remove('hidden'); grid.classList.add('hidden'); empty.classList.add('hidden'); error.classList.add('hidden');
             try {
-                const response = await fetch(`${GET_PRODUCTS_URL}?filter=${activeFilter}`);
+                let url = `${GET_PRODUCTS_URL}?filter=${activeFilter}`;
+                if (activeSort) url += `&sort=${activeSort}`;
+                const response = await fetch(url, { credentials: 'same-origin' });
+                const contentType = response.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) {
+                    console.error('GET_PRODUCTS_URL did not return JSON. Content-Type:', contentType);
+                    error.textContent = 'Failed to load products (unexpected response).';
+                    error.classList.remove('hidden');
+                    return;
+                }
                 const products = await response.json();
                 grid.innerHTML = '';
-                if (products.length === 0) { empty.classList.remove('hidden'); } 
+                if (!Array.isArray(products) || products.length === 0) { empty.classList.remove('hidden'); } 
                 else { products.forEach(p => grid.innerHTML += buildProductCard(p)); grid.classList.remove('hidden'); }
             } catch (e) { console.error(e); error.classList.remove('hidden'); } 
             finally { loading.classList.add('hidden'); }
@@ -250,6 +259,7 @@
     // ===== Event Listeners =====
     document.getElementById('filter-all').addEventListener('click', () => { activeFilter = 'all'; fetchProducts(); });
     document.getElementById('filter-my').addEventListener('click', () => { if (!LOGGED_IN_USER_ID) { window.location.href = "{% url 'main:login' %}"; return; } activeFilter = 'my'; fetchProducts(); });
+    sortSelect?.addEventListener('change', (e) => { activeSort = e.target.value; fetchProducts(); });
     document.getElementById('refresh-button').addEventListener('click', fetchProducts);
     document.getElementById('create-product-btn').addEventListener('click', openCreateModal);
     document.getElementById('create-product-btn-empty').addEventListener('click', openCreateModal);
