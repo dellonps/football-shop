@@ -13,33 +13,39 @@ from main.forms import ProductForm
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.utils.html import strip_tags
+from django.forms.models import model_to_dict
+
+
  
 
 @login_required(login_url="/login")
 def show_main(request):
-   filter_type = request.GET.get("filter", "all")  # default 'all'
-   category_filter = request.GET.get("category", None)
+    filter_type = request.GET.get("filter", "all")  # default 'all'
+    category_filter = request.GET.get("category", None)
 
-   if filter_type == "all":
+    if filter_type == "all":
         shop_list = Product.objects.all()
-   else:
+    else:
         shop_list = Product.objects.filter(user=request.user)
-   
-   categories = Product.objects.values_list("category", flat=True).distinct()
-   if category_filter:
+
+    categories = Product.objects.values_list("category", flat=True).distinct()
+    if category_filter:
         shop_list = shop_list.filter(category=category_filter)
 
-      
+    menu_items = [('all', 'All Products'), ('my', 'My Products')]
 
-   context = {
-        "npm": "2406495956",      
-        "name": "Cristian Dillon Philbert",     
-        "class": "PBP A",       
+    context = {
+        "npm": "2406495956",
+        "name": "Cristian Dillon Philbert",
+        "class": "PBP A",
         "products": shop_list,
         "categories": categories,
-        "last_login": request.COOKIES.get('last_login', 'Never')
+        "last_login": request.COOKIES.get('last_login', 'Never'),
+        "menu_items": menu_items,
     }
-   return render(request, "main.html", context)
+    return render(request, "main.html", context)
+
 
 @login_required(login_url='/login')
 def create_product(request):
@@ -128,8 +134,8 @@ def register(request):
 @require_POST
 @login_required
 def add_product_ajax(request):
-     form = ProductForm(request.POST)
-     if form.is_valid():
+    form = ProductForm(request.POST)
+    if form.is_valid():
         # Create the product from cleaned data, ensuring security and correctness
         product = form.save(commit=False)
         product.user = request.user
@@ -137,12 +143,22 @@ def add_product_ajax(request):
         product.name = strip_tags(form.cleaned_data.get("name"))
         product.description = strip_tags(form.cleaned_data.get("description"))
         product.save()
-        return HttpResponse(b"CREATED", status=201)
-     else:
-        # Return form errors if validation fails
+
+        # Return JSON data
+        data = {
+            'pk': product.pk,
+            'fields': {
+                'name': product.name,
+                'description': product.description,
+                'price': product.price,
+                'category': product.category,
+                'thumbnail': product.thumbnail,
+                'user': product.user.id,
+            }
+        }
+        return JsonResponse(data, status=201)
+    else:
         return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
-
-
 
 
 
@@ -211,9 +227,16 @@ def get_products_json(request):
     return HttpResponse(serializers.serialize("json", products), content_type="application/json")
 
 @login_required
-def get_product_by_id_json(request, id):
-    product = get_object_or_404(Product, pk=id)
+def get_product_by_id_json(request, pk):
+    product = get_object_or_404(Product, pk=pk)
     return JsonResponse(model_to_dict(product))
+
+
+
+
+
+
+
 
 
 

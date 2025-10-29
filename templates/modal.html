@@ -12,18 +12,19 @@
     </div>
     <div class="px-6 py-4 space-y-6 form-style">
       <form id="productForm">
+        {% csrf_token %}
         <input type="hidden" id="product-id" name="product-id">
         <div class="mb-4"><label for="name" class="block text-sm font-medium text-gray-700">Product Name</label><input type="text" id="name" name="name" class="mt-1 block w-full border rounded-md px-3 py-2" required></div>
         <div class="mb-4"><label for="description" class="block text-sm font-medium">Description</label><textarea id="description" name="description" rows="3" class="mt-1 block w-full border rounded-md px-3 py-2" required></textarea></div>
         <div class="mb-4"><label for="price" class="block text-sm font-medium">Price (Rp)</label><input type="number" id="price" name="price" class="mt-1 block w-full border rounded-md px-3 py-2" required></div>
         <div class="mb-4"><label for="category" class="block text-sm font-medium">Category</label><select id="category" name="category" class="mt-1 block w-full border rounded-md px-3 py-2" required><option value="">Choose a category</option><option value="Shoes">Shoes</option><option value="Jersey">Jersey</option><option value="Equipment">Equipment</option><option value="Accessories">Accessories</option></select></div>
         <div class="mb-4"><label for="thumbnail" class="block text-sm font-medium">Image URL</label><input type="url" id="thumbnail" name="thumbnail" class="mt-1 block w-full border rounded-md px-3 py-2"></div>
-        <div class="flex items-center"><input id="is_featured" name="is_featured" type="checkbox" class="w-4 h-4 text-green-600 rounded"><label for="is_featured" class="ml-2 text-sm font-medium">Featured Product</label></div>
+        
       </form>
     </div>
     <div class="flex flex-col sm:flex-row gap-4 p-6 border-t rounded-b">
       <button type="button" id="cancelButton" class="order-2 sm:order-1 px-6 py-3 border rounded-md font-medium hover:bg-gray-50" onclick="hideModal()">Cancel</button>
-      <button type="submit" id="submitButton" form="productForm" class="order-1 sm:order-2 flex-1 bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700"></button>
+      <button type="submit" id="submitButton" form="productForm" class="order-1 sm:order-2 flex-1 bg-sky-600 text-white px-6 py-3 rounded-md font-medium hover:bg-sky-700"></button>
     </div>
   </div>
 </div>

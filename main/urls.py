@@ -8,10 +8,12 @@ from main.views import (
     get_product_by_id_json,
     edit_product,
     add_product_ajax,
+    edit_product_ajax,
     delete_product_ajax,
     login_ajax,
     register_ajax,
     get_products_json,
+    
  
 
 
@@ -35,9 +37,11 @@ urlpatterns = [
 
     path("get-products/", get_products_json, name="get_products_json"),
     path("create-product-ajax/", add_product_ajax, name="add_product_ajax"),
+    path("edit-product-ajax-/<int:id>/", edit_product_ajax, name= "edit_product_ajax"),
+
 
     path('product-edit/<int:id>/', edit_product, name='edit_product'),
-    path("get-product/<int:id>/", get_product_by_id_json, name="get_product_by_id_json"),
+    path("get-product/<int:pk>/", get_product_by_id_json, name="get_product_by_id_json"),
     path('products-delete-ajax/<int:id>/', delete_product_ajax, name='delete_product_ajax'),
     path('login-ajax/', login_ajax, name='login_ajax'),
     path('register-ajax/', register_ajax, name='register_ajax'),
