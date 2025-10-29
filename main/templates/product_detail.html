@@ -1,27 +1,82 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block meta %}
+<title>{{ product.name }} - Football Shop</title>
+{% endblock meta %}
+
 {% block content %}
-<p><a href="{% url 'main:show_main' %}"><button>← Back to Product List</button></a></p>
+<div class="bg-gray-50 w-full min-h-screen">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Back Navigation -->
+        <div class="mb-6">
+            <a href="{% url 'main:show_main' %}" class="text-gray-600 hover:text-gray-900 font-medium transition-colors">
+                ← Back to Home
+            </a>
+        </div>
 
-<h1>{{ product.name }}</h1>
-<p><b>Category:</b> {{ product.category }}</p>
-<p><b>Price:</b> Rp {{ product.price }}</p>
+       <!-- Article -->
+<article id="product-article" class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <!-- Header -->
+    <div class="p-6 sm:p-8">
+        <div class="flex flex-wrap items-center gap-2 mb-4">
+            <span id="product-category" class="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-teal-500 text-white">
+                {{ product.category }}
+            </span>
+        </div>
 
-{% if product.is_featured %}
-  <p><b>Featured Product</b></p>
-{% endif %}
+        <h1 id="product-name" class="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight mb-4">
+            {{ product.name }}
+        </h1>
 
-{% if product.thumbnail %}
-  <img src="{{ product.thumbnail }}" alt="Product thumbnail" style="width:300px; height:auto;">
-  <br /><br />
-{% endif %}
+        <div class="flex flex-wrap items-center text-sm text-gray-500 gap-4">
+            <time id="product-created" datetime="{{ product.created_at|date:'c' }}">
+                {{ product.created_at|date:"M j, Y g:i A" }}
+            </time>
+            <span id="product-views">{{ product.product_views }} views</span>
+        </div>
+    </div>
 
-<p>{{ product.description }}</p>
+    <!-- Featured Image -->
+    {% if product.thumbnail %}
+        <div id="product-image-container" class="px-6 sm:px-8 flex justify-center">
+            <img id="product-image" src="{{ product.thumbnail }}" 
+                 alt="{{ product.name }}" 
+                 class="{% if product.category == 'Shoes' or product.category == 'Accessories' %}w-90 h-90{% else %}w-64 h-64{% endif %} sm:h-90 lg:h-96 object-cover rounded-lg">
+        </div>
+    {% endif %}
 
-{% if product.user %}
-    <p>Owner: {{ product.user.username }}</p>
-{% else %}
-    <p>Owner: Anonymous</p>
-{% endif %}
+    <!-- Content -->
+    <div class="p-6 sm:p-8">
+        <div class="prose prose-lg max-w-none">
+            <div id="product-price" class="text-teal-400 font-semibold leading-tight text-2xl sm:text-3xl">
+                Rp {{ product.price }}
+            </div>
+        </div>
+    </div>
+
+    <div class="p-6 sm:p-8 -mt-4">
+        <div class="prose prose-lg max-w-none">
+            <div id="product-description" class="text-gray-700 leading-relaxed text-base sm:text-lg">
+                {{ product.description }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Author Info -->
+    <div class="border-t border-gray-200 p-6 sm:p-8 bg-gray-50">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="font-medium text-gray-900">
+                    <p id="product-owner">{% if product.user %}Owner: {{ product.user.username }}{% else %}Owner: Anonymous{% endif %}</p>
+                </div>
+                <p class="text-sm text-gray-500">Owner</p>
+            </div>
+        </div>
+    </div>
+</article>
+    </div>
+</div>
 
 {% endblock content %}
-

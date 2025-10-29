@@ -1,3 +1,89 @@
+Tugas 5
+
+
+1. Jika terdapat beberapa CSS selector untuk suatu elemen HTML, jelaskan urutan prioritas pengambilan CSS selector tersebut!
+
+    Urutan prioritas (specificity) CSS selector adalah:
+
+    - Inline style (misal: <div style="color: red;">) — paling tinggi.
+    - ID selector (misal: #header).
+    - Class, attribute, dan pseudo-class selector (misal: .menu, [type="text"], :hover).
+    - Element dan pseudo-element selector (misal: div, h1, ::after).
+    - Urutan kemunculan: Jika dua selector memiliki tingkat specificity yang sama, maka yang muncul terakhir di CSS akan diterapkan.
+
+
+
+2. Mengapa responsive design menjadi konsep yang penting dalam pengembangan aplikasi web? Berikan contoh aplikasi yang sudah dan belum menerapkan responsive design, serta jelaskan mengapa!
+
+    1. Responsive design penting karena:
+        - Memastikan tampilan web tetap baik di berbagai perangkat (desktop, tablet, mobile).
+        - Meningkatkan pengalaman pengguna (user experience).
+        - SEO lebih baik (Google memprioritaskan mobile-friendly site).
+
+
+    2. Contoh aplikasi:
+
+        - Sudah responsive: Instagram, Tokopedia, Shopee (tampilan menyesuaikan layar).
+        - Belum responsive: Website lama yang hanya optimal di desktop, misal situs pemerintah lama yang harus di-scroll secara horizontal di HP.
+
+3. Jelaskan perbedaan antara margin, border, dan padding, serta cara untuk mengimplementasikan ketiga hal tersebut!
+  
+    - Margin: Jarak luar elemen ke elemen lain.
+    - Border: Garis tepi elemen.
+    - Padding: Jarak antara border dan isi elemen.
+
+
+4. Jelaskan konsep flex box dan grid layout beserta kegunaannya!
+
+    1. Flexbox: Layout satu dimensi (baris/kolom), memudahkan align dan distribusi ruang antar item dalam container.
+    .flex-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    }
+    Kegunaan: Navbar, card horizontal, centering.
+
+    2. Grid: Layout dua dimensi (baris & kolom), cocok untuk desain kompleks seperti galeri.
+    .grid-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    }
+    Kegunaan: Galeri foto, dashboard, layout majalah.
+
+5. elaskan bagaimana cara kamu mengimplementasikan checklist di atas secara step-by-step (bukan hanya sekadar mengikuti tutorial)!
+
+    1. Setup & Styling
+        - Menambahkan Tailwind melalui CDN dan global.css untuk gaya form custom.
+        - Mengubah skema warna dari hijau ke hitam/abu-abu untuk tampilan yang bersih dan tegas.
+
+    2. Product CRUD
+        - create_product: menetapkan product.user = request.user.
+        - edit_product & delete_product: dibatasi hanya untuk pemilik produk.
+
+    3. Templates
+
+        - navbar.html: navigasi responsif dengan menu desktop + mobile.
+        - card_product.html: kartu produk didesain ulang dengan gambar yang bisa diklik, info produk, harga, dan tombol inline.
+
+    4. Responsive Layout
+
+        - Menggunakan utility grid Tailwind untuk daftar produk.
+        - Tombol dan form diberi gaya dengan spacing konsisten dan efek hover.
+
+    5. Ownership Fix
+
+        - Memastikan aksi produk hanya dapat dilakukan oleh pemilik produk.
+
+
+
+
+
+
+
+
+
+
 TUGAS 4
 1. Apa itu AuthenticationForm di Django? Kelebihan & kekurangannya
     AuthenticationForm adalah form bawaan Django (django.contrib.auth.forms.AuthenticationForm) yang menyediakan field untuk login (biasanya username dan password) dan fungsi validasi terkait autentikasi user
