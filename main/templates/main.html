@@ -49,13 +49,13 @@
 {% include 'modal.html' %}
 
 <script>
+    // === CSRF Helper ===
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
             const cookies = document.cookie.split(';');
             for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i].trim();
-                // Does this cookie string begin with the name we want?
                 if (cookie.substring(0, name.length + 1) === (name + '=')) {
                     cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                     break;
@@ -64,211 +64,306 @@
         }
         return cookieValue;
     }
-    // --- END OF NEW FUNCTION ---
 
+    // === Modal Helpers (global, karena dipakai di mana-mana) ===
     function showModal() {
-        
-    }
-    function showModal() {
-        const modal = document.getElementById('crudModal'); if (!modal) return;
+        const modal = document.getElementById('crudModal');
+        if (!modal) return;
+
         modal.classList.remove('hidden');
-        const modalContent = document.getElementById('crudModalContent'); if (!modalContent) return;
+
+        const modalContent = document.getElementById('crudModalContent');
+        if (!modalContent) return;
+
         setTimeout(() => {
             modalContent.classList.remove('opacity-0', 'scale-95');
             modalContent.classList.add('opacity-100', 'scale-100');
         }, 50);
     }
-    
-    // ===== Modal =====
+
     function hideModal() {
-        const modal = document.getElementById('crudModal'); if (!modal) return;
-        const modalContent = document.getElementById('crudModalContent'); if (!modalContent) return;
+        const modal = document.getElementById('crudModal');
+        if (!modal) return;
+
+        const modalContent = document.getElementById('crudModalContent');
+        if (!modalContent) return;
+
         modalContent.classList.remove('opacity-100', 'scale-100');
         modalContent.classList.add('opacity-0', 'scale-95');
-        setTimeout(() => { modal.classList.add('hidden'); }, 150);
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 150);
     }
-    
+
+    // === Edit Modal (global, tapi body-nya nanti pakai constant dari DOMContentLoaded) ===
     async function openEditModal(id) {
-        const productForm = document.getElementById('productForm'); if (!productForm) return;
+        const productForm = document.getElementById('productForm');
+        if (!productForm) return;
+
         productForm.reset();
+
         const GET_PRODUCT_URL_BASE = "{% url 'main:get_product_by_id_json' 0 %}";
         const response = await fetch(GET_PRODUCT_URL_BASE.replace('0', id));
         const product = await response.json();
+
         document.getElementById('name').value = product.name;
         document.getElementById('description').value = product.description;
         document.getElementById('price').value = product.price;
         document.getElementById('category').value = product.category;
         document.getElementById('thumbnail').value = product.thumbnail;
+
         document.getElementById('modal-title').textContent = "Edit Product";
         document.getElementById('modal-subtitle').textContent = "Update product details";
         document.getElementById('submitButton').textContent = "Update Product";
-        productForm.onsubmit = async (e) => { e.preventDefault(); await editProduct(id); };
-        showModal();
-    }
 
-    function confirmDelete(id) {
-        window.productIdToDelete = id;
-        const deleteModal = document.getElementById('deleteModal');
-        if (deleteModal) deleteModal.classList.remove('hidden');
-    }
-
-
-
-
-
-    document.addEventListener('DOMContentLoaded', function() {
-    const GET_PRODUCTS_URL = "{% url 'main:get_products_json' %}";
-    const ADD_PRODUCT_URL = "{% url 'main:add_product_ajax' %}";
-    const EDIT_PRODUCT_URL_BASE = "{% url 'main:edit_product_ajax' 0 %}";
-    const DELETE_PRODUCT_URL_BASE = "{% url 'main:delete_product_ajax' 0 %}";
-    const LOGGED_IN_USER_ID = "{{ user.id|default_if_none:'' }}";
-    const NO_PRODUCT_IMG_URL = "{% static 'image/no-product.png' %}";
-
-    const grid = document.getElementById('grid');
-    const loading = document.getElementById('loading');
-    const empty = document.getElementById('empty');
-    const error = document.getElementById('error');
-    const productForm = document.getElementById('productForm');
-    
-    let activeFilter = 'all';
-    
-    
-    const openCreateModal = () => {
-        if (!productForm) return;
-        productForm.reset();
-        document.getElementById('modal-title').textContent = "Add New Product";
-        document.getElementById('modal-subtitle').textContent = "Share your football gear";
-        document.getElementById('submitButton').textContent = "Add Product";
-        productForm.onsubmit = async (e) => { e.preventDefault(); await addProduct(); };
-        showModal();
+        productForm.onsubmit = async (e) => {
+            e.preventDefault();
+            await window.editProduct(id);
         };
-        
-    async function addProduct() {
-        const response = await fetch(ADD_PRODUCT_URL, { method: "POST", body: new FormData(productForm) });
-        if (response.status === 201) { 
-            hideModal(); 
-            alert('Product added successfully!'); 
-            fetchProducts(); 
-        } else { 
-            alert('Error: Failed to add product.'); 
-        }
+
+        showModal();
     }
 
-    window.editProduct = async function(id) {
-            const url = EDIT_PRODUCT_URL_BASE.replace('0', id);
-            const response = await fetch(url, { method: "POST", body: new FormData(productForm) });
-            if (response.ok) { 
-                hideModal(); 
-                alert('Product updated successfully!'); 
-                fetchProducts(); 
-            } else { 
-                alert('Error: Failed to update product.'); 
-            }
-    }
+    document.addEventListener('DOMContentLoaded', function () {
+        // === URL & Const ===
+        const GET_PRODUCTS_URL = "{% url 'main:get_products_json' %}";
+        const ADD_PRODUCT_URL = "{% url 'main:add_product_ajax' %}";
+        const EDIT_PRODUCT_URL_BASE = "{% url 'main:edit_product_ajax' 0 %}";
+        const DELETE_PRODUCT_URL_BASE = "{% url 'main:delete_product_ajax' 0 %}";
+        const LOGGED_IN_USER_ID = "{{ user.id|default_if_none:'' }}";
+        const NO_PRODUCT_IMG_URL = "{% static 'image/no-product.png' %}";
 
-    function hideDeleteModal () {
-        window.productIdToDelete = null;
-        document.getElementById('deleteModal').classList.add('hidden');
-    }
+        // === DOM Elements ===
+        const grid = document.getElementById('grid');
+        const loading = document.getElementById('loading');
+        const empty = document.getElementById('empty');
+        const error = document.getElementById('error');
+        const productForm = document.getElementById('productForm');
 
-    async function deleteProduct() {
-            if (!window.productIdToDelete) return;
-            
-            const csrfToken = getCookie('csrftoken');
-            
-            const url = DELETE_PRODUCT_URL_BASE.replace('0', window.productIdToDelete);
+        let activeFilter = 'all';
 
-            const response = await fetch(url, { 
+        // === Create Modal ===
+        const openCreateModal = () => {
+            if (!productForm) return;
+
+            productForm.reset();
+            document.getElementById('modal-title').textContent = "Add New Product";
+            document.getElementById('modal-subtitle').textContent = "Share your football gear";
+            document.getElementById('submitButton').textContent = "Add Product";
+
+            productForm.onsubmit = async (e) => {
+                e.preventDefault();
+                await addProduct();
+            };
+
+            showModal();
+        };
+
+        // === Add Product ===
+        async function addProduct() {
+            const response = await fetch(ADD_PRODUCT_URL, {
                 method: "POST",
-                headers: {
-                    "X-CSRFToken": csrfToken, 
-                    "Content-Type": "application/x-www-form-urlencoded"
-                }
+                body: new FormData(productForm),
+                credentials: 'same-origin',
             });
 
-            if (response.ok) { 
-                alert('Product deleted successfully!'); 
-                fetchProducts(); 
-            } else { 
-                alert('Error: Failed to delete product.'); 
+            if (response.status === 201) {
+                hideModal();
+                alert('Product added successfully!');
+                fetchProducts();
+            } else {
+                alert('Error: Failed to add product.');
             }
-            
-            hideDeleteModal(); 
-    }
-        
-    
-    window.openEditModal = openEditModal;
-    window.confirmDelete = confirmDelete;
+        }
 
+        // === Edit Product ===
+        window.editProduct = async function (id) {
+            const url = EDIT_PRODUCT_URL_BASE.replace('0', id);
+            const response = await fetch(url, {
+                method: "POST",
+                body: new FormData(productForm),
+                credentials: 'same-origin',
+            });
 
+            if (response.ok) {
+                hideModal();
+                alert('Product updated successfully!');
+                fetchProducts();
+            } else {
+                alert('Error: Failed to update product.');
+            }
+        };
 
-    // ===== Build Grid =====
-    function buildProductCard (product) {
-        const fields = product.fields;
-        const detailUrl = `/product/${product.pk}/`;
-        const price = new Intl.NumberFormat('id-ID').format(fields.price);
-        const userButtons = (LOGGED_IN_USER_ID && Number(LOGGED_IN_USER_ID) === fields.user)
-            ? `<button onclick="openEditModal(${product.pk})" class="px-3 py-2 rounded-lg border text-sm">Edit</button>
-                <button onclick="confirmDelete(${product.pk})" class="px-3 py-2 rounded-lg border border-red-300 text-red-600 text-sm">Delete</button>` : '';
+        // === Delete Modal Helper ===
+        function hideDeleteModal() {
+            window.productIdToDelete = null;
+            const modal = document.getElementById('deleteModal');
+            if (modal) modal.classList.add('hidden');
+        }
 
-        return `
-        <article class="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 group flex flex-col">
-            <a href="${detailUrl}" class="block relative overflow-hidden aspect-square bg-gray-100">
-            <img src="${fields.thumbnail || NO_PRODUCT_IMG_URL}" alt="${fields.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-            </a>
-            <div class="p-5 flex flex-col flex-grow">
-            <div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">
-                <a href="${detailUrl}" class="hover:text-sky-600 transition-colors">${fields.name}</a>
-                </h3>
-                <p class="text-gray-500 text-sm mb-4 line-clamp-2">${fields.description}</p>
-            </div>
-            <div class="mt-auto flex items-center justify-between pt-4 border-t border-gray-100">
-                <span class="text-xl font-bold text-sky-600">Rp ${price}</span>
-                <div class="flex space-x-2">
-                <a href="${detailUrl}" class="px-3 py-2 rounded-lg bg-sky-600 text-white font-medium hover:bg-sky-700 text-sm">View</a>
-                ${userButtons}
-                </div>
-            </div>
-            </div>
-        </article>
-        `;
-    };
+        // === Delete Product (inti) ===
+        async function deleteProduct() {
+            if (!window.productIdToDelete) return;
 
-    async function fetchProducts() {
-            loading.classList.remove('hidden'); grid.classList.add('hidden'); empty.classList.add('hidden'); error.classList.add('hidden');
+            const url = DELETE_PRODUCT_URL_BASE.replace('0', window.productIdToDelete);
+            const csrftoken = getCookie('csrftoken');
+
             try {
-                let url = `${GET_PRODUCTS_URL}?filter=${activeFilter}`;
-                if (activeSort) url += `&sort=${activeSort}`;
+                console.debug('deleteProduct: POST', url, 'productIdToDelete=', window.productIdToDelete);
+
+                const response = await fetch(url, {
+                    method: "POST",
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                    },
+                });
+
+                console.debug('deleteProduct: response status', response.status);
+
+                let data = null;
+                const contentType = response.headers.get('content-type') || '';
+                if (contentType.includes('application/json')) {
+                    data = await response.json().catch(() => null);
+                    console.debug('deleteProduct: parsed JSON', data);
+                }
+
+                if (response.ok && data?.status === "success") {
+                    alert('Product deleted successfully!');
+                    fetchProducts();
+                } else {
+                    const errorMsg = data?.message || `Failed to delete product (status ${response.status}).`;
+                    alert('Error: ' + errorMsg);
+                    console.error('Delete failed:', response.status, data);
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert('Error: ' + error.message);
+            }
+
+            hideDeleteModal();
+        }
+
+        // === Confirm Delete (dipanggil dari tombol Delete di card) ===
+        function confirmDelete(id) {
+            window.productIdToDelete = id;
+            const confirmed = window.confirm(
+                'Are you sure you want to delete this product? This action cannot be undone.'
+            );
+            if (confirmed) {
+                deleteProduct();
+            }
+        }
+
+        // === Expose ke global untuk dipakai onclick HTML ===
+        window.openEditModal = openEditModal;
+        window.confirmDelete = confirmDelete;
+        window.deleteProduct = deleteProduct;  // optional, tapi aman
+
+        // === Build Card ===
+        function buildProductCard(product) {
+            const fields = product.fields;
+            const detailUrl = `/product/${product.pk}/`;
+            const price = new Intl.NumberFormat('id-ID').format(fields.price);
+
+            const userButtons = (LOGGED_IN_USER_ID && Number(LOGGED_IN_USER_ID) === fields.user)
+                ? `
+                <button onclick="openEditModal(${product.pk})" class="px-3 py-2 rounded-lg border text-sm">Edit</button>
+                <button onclick="confirmDelete(${product.pk})" class="px-3 py-2 rounded-lg border border-red-300 text-red-600 text-sm">Delete</button>
+                `
+                : '';
+
+            return `
+            <article class="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 group flex flex-col">
+                <a href="${detailUrl}" class="block relative overflow-hidden aspect-square bg-gray-100">
+                    <img src="${fields.thumbnail || NO_PRODUCT_IMG_URL}" alt="${fields.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                </a>
+                <div class="p-5 flex flex-col flex-grow">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">
+                            <a href="${detailUrl}" class="hover:text-sky-600 transition-colors">${fields.name}</a>
+                        </h3>
+                        <p class="text-gray-500 text-sm mb-4 line-clamp-2">${fields.description}</p>
+                    </div>
+                    <div class="mt-auto flex items-center justify-between pt-4 border-t border-gray-100">
+                        <span class="text-xl font-bold text-sky-600">Rp ${price}</span>
+                        <div class="flex space-x-2">
+                            <a href="${detailUrl}" class="px-3 py-2 rounded-lg bg-sky-600 text-white font-medium hover:bg-sky-700 text-sm">View</a>
+                            ${userButtons}
+                        </div>
+                    </div>
+                </div>
+            </article>
+            `;
+        }
+
+        // === Fetch Products ===
+        async function fetchProducts() {
+            loading.classList.remove('hidden');
+            grid.classList.add('hidden');
+            empty.classList.add('hidden');
+            error.classList.add('hidden');
+
+            try {
+                const url = `${GET_PRODUCTS_URL}?filter=${activeFilter}`;
                 const response = await fetch(url, { credentials: 'same-origin' });
                 const contentType = response.headers.get('content-type') || '';
+
                 if (!contentType.includes('application/json')) {
                     console.error('GET_PRODUCTS_URL did not return JSON. Content-Type:', contentType);
                     error.textContent = 'Failed to load products (unexpected response).';
                     error.classList.remove('hidden');
                     return;
                 }
+
                 const products = await response.json();
                 grid.innerHTML = '';
-                if (!Array.isArray(products) || products.length === 0) { empty.classList.remove('hidden'); } 
-                else { products.forEach(p => grid.innerHTML += buildProductCard(p)); grid.classList.remove('hidden'); }
-            } catch (e) { console.error(e); error.classList.remove('hidden'); } 
-            finally { loading.classList.add('hidden'); }
+
+                if (!Array.isArray(products) || products.length === 0) {
+                    empty.classList.remove('hidden');
+                } else {
+                    products.forEach(p => {
+                        grid.innerHTML += buildProductCard(p);
+                    });
+                    grid.classList.remove('hidden');
+                }
+            } catch (e) {
+                console.error(e);
+                error.classList.remove('hidden');
+            } finally {
+                loading.classList.add('hidden');
+            }
         }
 
-    // ===== Event Listeners =====
-    document.getElementById('filter-all').addEventListener('click', () => { activeFilter = 'all'; fetchProducts(); });
-    document.getElementById('filter-my').addEventListener('click', () => { if (!LOGGED_IN_USER_ID) { window.location.href = "{% url 'main:login' %}"; return; } activeFilter = 'my'; fetchProducts(); });
-    sortSelect?.addEventListener('change', (e) => { activeSort = e.target.value; fetchProducts(); });
-    document.getElementById('refresh-button').addEventListener('click', fetchProducts);
-    document.getElementById('create-product-btn').addEventListener('click', openCreateModal);
-    document.getElementById('create-product-btn-empty').addEventListener('click', openCreateModal);
-    document.getElementById('nav-create-product')?.addEventListener('click', openCreateModal);
-    document.getElementById('nav-create-product-mobile')?.addEventListener('click', openCreateModal);
-    document.getElementById('confirmDeleteBtn')?.addEventListener('click', deleteProduct);
-    document.getElementById('cancelDeleteBtn')?.addEventListener('click', hideDeleteModal);
+        // === Event Listeners ===
+        document.getElementById('filter-all').addEventListener('click', () => {
+            activeFilter = 'all';
+            fetchProducts();
+        });
 
-    fetchProducts();
+        document.getElementById('filter-my').addEventListener('click', () => {
+            if (!LOGGED_IN_USER_ID) {
+                window.location.href = "{% url 'main:login' %}";
+                return;
+            }
+            activeFilter = 'my';
+            fetchProducts();
+        });
+
+        document.getElementById('refresh-button').addEventListener('click', fetchProducts);
+        document.getElementById('create-product-btn').addEventListener('click', openCreateModal);
+        document.getElementById('create-product-btn-empty')?.addEventListener('click', openCreateModal);
+        document.getElementById('nav-create-product')?.addEventListener('click', openCreateModal);
+        document.getElementById('nav-create-product-mobile')?.addEventListener('click', openCreateModal);
+
+        // Kalau kamu punya modal konfirmasi custom:
+        document.getElementById('confirmDeleteBtn')?.addEventListener('click', deleteProduct);
+        document.getElementById('cancelDeleteBtn')?.addEventListener('click', hideDeleteModal);
+
+        // === Initial Load ===
+        fetchProducts();
     });
 </script>
+
 {% endblock content %}

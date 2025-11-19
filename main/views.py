@@ -15,6 +15,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.utils.html import strip_tags
 from django.forms.models import model_to_dict
+import requests
+import json
+import base64
+
 
 
  
@@ -182,14 +186,27 @@ def edit_product_ajax(request, id):
 
 @csrf_exempt
 @require_POST
-@login_required
 def delete_product_ajax(request, id):
+    # Ensure the user is authenticated (login_required normally handles redirects,
+    # but for AJAX we explicitly return JSON status codes so frontend can react)
+    if not request.user or not request.user.is_authenticated:
+        return JsonResponse({"status": "error", "message": "Authentication required."}, status=401)
+
     try:
-        product = Product.objects.get(pk=id, user=request.user)
-        product.delete()
-        return JsonResponse({"status": "success"}, status=200)
+        print(f"delete_product_ajax called: user={getattr(request.user, 'username', None)} id={id}")
+        product = Product.objects.get(pk=id)
     except Product.DoesNotExist:
-        return JsonResponse({"status": "error", "message": "Product not found or permission denied."}, status=404)
+        return JsonResponse({"status": "error", "message": "Product not found."}, status=404)
+
+    # Ownership check
+    if product.user_id != request.user.id:
+        print(f"delete_product_ajax denied: user={getattr(request.user, 'username', None)} not owner of product id={id} (owner_id={product.user_id})")
+        return JsonResponse({"status": "error", "message": "Permission denied. Only owner can delete this product."}, status=403)
+
+    # Delete and return success
+    product.delete()
+    print(f"delete_product_ajax success: product id={id} deleted by user={getattr(request.user, 'username', None)}")
+    return JsonResponse({"status": "success"}, status=200)
 
 
 
@@ -247,19 +264,34 @@ def show_xml(request):
         content_type="application/xml"
     )
 
+@login_required
 def show_json(request):
-    products = Product.objects.all()
-    data = [
+    filter_type = request.GET.get("filter", "all")
+
+    if filter_type == "all":
+        product_list = Product.objects.all()
+    elif filter_type == "my":
+        product_list = Product.objects.filter(user=request.user)
+    else:
+        category = request.GET.get("category")
+        if category:
+            product_list = Product.objects.filter(category=category)
+        else:
+            product_list = Product.objects.all()
+
+    json_data = [
         {
             'id': product.id,
             'name': product.name,
             'price': product.price,
             'description': product.description,
+            'thumbnail': product.thumbnail,
             'category': product.category,
+            'user_username': product.user.username if product.user else None,
         }
-        for product in products
+        for product in product_list
     ]
-    return JsonResponse(data, safe=False)
+    return JsonResponse(json_data, safe=False)
 
 
 def show_xml_by_id(request, id):
@@ -273,7 +305,7 @@ def show_json_by_id(request, id):
     try:
         product = Product.objects.select_related('user').get(pk=id)
         data = {
-            'id': str(product.id),
+            'id': product.id,
             'name': product.name,
             'description': product.description,
             'price': product.price,  # kalau DecimalField
@@ -284,3 +316,89 @@ def show_json_by_id(request, id):
         return JsonResponse(data)
     except Product.DoesNotExist:
         return JsonResponse({'detail': 'Not found'}, status=404)
+
+def proxy_image(request):
+    image_url = request.GET.get('url')
+    if not image_url:
+        return HttpResponse('No URL provided', status=400)
+    
+    if image_url.startswith("data:image"):
+        try:
+            header, b64data = image_url.split(",", 1)
+
+            # Ambil MIME type: contoh "image/jpeg"
+            mime = header.split(";")[0].split(":")[1]  
+
+            # Decode base64 → bytes
+            image_data = base64.b64decode(b64data)
+
+            return HttpResponse(image_data, content_type=mime)
+
+        except Exception as e:
+            return HttpResponse(f'Error decoding base64 image: {str(e)}', status=500)
+    try:
+        # Fetch image from external source
+        response = requests.get(image_url, timeout=10)
+        response.raise_for_status()
+        
+        # Return the image with proper content type
+        return HttpResponse(
+            response.content,
+            content_type=response.headers.get('Content-Type', 'image/jpeg')
+        )
+    except requests.RequestException as e:
+        return HttpResponse(f'Error fetching image: {str(e)}', status=500)
+    
+
+@csrf_exempt
+@login_required
+def create_product_flutter(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        name = strip_tags(data.get("name", ""))  # Strip HTML tags
+        description = strip_tags(data.get("description", ""))  # Strip HTML tags
+        category = data.get("category", "")
+        thumbnail = data.get("thumbnail", "")
+        price_raw = data.get("price", 0)
+        user = request.user
+        try:
+            # sesuaikan dengan tipe di models.py (IntegerField / FloatField / DecimalField)
+            price = int(price_raw)
+        except (TypeError, ValueError):
+            return JsonResponse(
+                {"status": "error", "message": "Price must be a valid number"},
+                status=400
+            )
+        
+
+        
+        new_product = Product(
+            name= name, 
+            description=description,
+            category=category,
+            thumbnail=thumbnail,
+            user=user,
+            price=price,
+        )
+        new_product.save()
+        
+        return JsonResponse({"status": "success"}, status=200)
+    else:
+        return JsonResponse({"status": "error"}, status=401)
+    
+@login_required
+def show_my_products_json(request):
+    products = Product.objects.filter(user=request.user).order_by("-created_at")
+    data = [
+        {
+            "id": p.id,
+            "name": p.name,
+            "price": p.price,
+            "description": p.description,
+            "category": p.category,
+            "thumbnail": p.thumbnail,
+            "created_at": p.created_at.isoformat(),
+        }
+        for p in products
+    ]
+    return JsonResponse(data, safe=False)
